@@ -2,6 +2,12 @@ package de.thbrandenburg.nitze.webapp;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,8 +26,24 @@ public class WebAppApplication {
 	}
 
 	@PostMapping("/students")
-	public String createPerson(@RequestParam(value = "name", defaultValue = "World") String name) {
-		return String.format("Hallo %s! Schön, dass du da bist!", name);
+	public String createPerson(@RequestParam(value = "firstName") String firstName) {
+		Student student = new Student(firstName);
+		student.setAge(25);
+
+		StandardServiceRegistry ssr = new StandardServiceRegistryBuilder().configure().build();
+
+		Metadata meta = new MetadataSources(ssr).getMetadataBuilder().build();
+		SessionFactory factory = meta.getSessionFactoryBuilder().build();
+		Session session = factory.openSession();
+
+		session.beginTransaction();
+		session.persist(student);
+		session.flush();
+		session.close();
+
+		//database.save(student);
+
+		return "Studierende(r) wurde erfolgreich in der Datenbank persistiert!";
 	}
 
 	@GetMapping("/students")
